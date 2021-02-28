@@ -47,7 +47,4 @@ func main() {
 Thanks to [u/justinisrael](https://www.reddit.com/user/justinisrael/) for inputs on improving resource usage.
 
 # License 
-BSD-2-Clause Plus Patent License 
-1. [spdx.org](https://spdx.org/licenses/BSD-2-Clause-Patent.html)
-2. [opensource.org](https://opensource.org/licenses/BSDplusPatent)
-3. [“BSD with PATENTS” and “BSD-2-Clause Plus Patent” are Not the Same](https://writing.kemitchell.com/2019/11/07/BSD-Patents.html)
+[BSD-2-Clause Plus Patent License](https://opensource.org/licenses/BSDplusPatent)
