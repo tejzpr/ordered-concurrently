@@ -1,4 +1,4 @@
-[![Testing](https://github.com/tejzpr/ordered-concurrently/actions/workflows/tests.yml/badge.svg)](https://github.com/tejzpr/ordered-concurrently/actions/workflows/tests.yml/badge.svg)
+<a href="https://github.com/tejzpr/ordered-concurrently/actions/workflows/tests.yml"><img src="https://github.com/tejzpr/ordered-concurrently/actions/workflows/tests.yml/badge.svg" alt="Tests"/></a>
 [![Open Source](https://img.shields.io/badge/Open%20Source-%20-green?logo=open-source-initiative&logoColor=white&color=blue&labelColor=blue)](https://en.wikipedia.org/wiki/Open_source)
 [![Golang](https://img.shields.io/badge/-Go%20Lang-blue?logo=go&logoColor=white)](https://golang.org)
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/tejzpr/ordered-concurrently)
@@ -45,3 +45,9 @@ func main() {
 ```
 # Credits
 Thanks to [u/justinisrael](https://www.reddit.com/user/justinisrael/) for inputs on improving resource usage.
+
+# License 
+BSD-2-Clause Plus Patent License 
+1. [spdx.org](https://spdx.org/licenses/BSD-2-Clause-Patent.html)
+2. [opensource.org](https://opensource.org/licenses/BSDplusPatent)
+3. [“BSD with PATENTS” and “BSD-2-Clause Plus Patent” are Not the Same](https://writing.kemitchell.com/2019/11/07/BSD-Patents.html)
