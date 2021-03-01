@@ -47,5 +47,3 @@ func main() {
 # Credits
 Thanks to [u/justinisrael](https://www.reddit.com/user/justinisrael/) for inputs on improving resource usage.
 
-# License 
-[BSD-2-Clause Plus Patent License](https://opensource.org/licenses/BSDplusPatent)
