@@ -35,6 +35,7 @@ func main() {
 	}()
 
 	// Create work and sent to input channel
+	// Output will be in the order of input
 	for work := 0; work < max; work++ {
 		wg.Add(1)
 		input := &OrderedInput{work}
