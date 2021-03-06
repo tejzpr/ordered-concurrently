@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/tejzpr/ordered-concurrently)](https://goreportcard.com/report/github.com/tejzpr/ordered-concurrently)
 
 # Ordered Concurrently
-A go module that processes work concurrently and returns output in a channel with predefined order
+A go module that processes work concurrently and returns output in a channel in predefined order
 
 # Usage 
 ## Import package
