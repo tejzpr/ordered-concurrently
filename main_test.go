@@ -29,9 +29,9 @@ func Test(t *testing.T) {
 		}(t)
 
 		// Create work and the associated order
-		for work, order := 0, 0; work < max; work, order = work+1, order+1 {
+		for work := 0; work < max; work++ {
 			wg.Add(1)
-			input := &OrderedInput{work, order}
+			input := &OrderedInput{work}
 			inputChan <- input
 		}
 		wg.Wait()

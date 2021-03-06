@@ -7,7 +7,6 @@ import (
 // OrderedInput input for Process
 type OrderedInput struct {
 	Value interface{}
-	Order int
 }
 
 // OrderedOutput is the output channel type from Process
@@ -23,7 +22,7 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, poolSize int) <-ch
 	outputChan := make(chan *OrderedOutput)
 	type processInput struct {
 		value interface{}
-		order int
+		order uint64
 		wg    *sync.WaitGroup
 	}
 	go func() {
@@ -35,8 +34,8 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, poolSize int) <-ch
 
 		// Go routine to print data in order
 		go func() {
-			current := 0
-			outputMap := make(map[int]*processInput)
+			var current uint64
+			outputMap := make(map[uint64]*processInput)
 			for item := range aggregatorChan {
 				if item.order != current {
 					outputMap[item.order] = item
@@ -66,9 +65,11 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, poolSize int) <-ch
 			}()
 		}
 
+		var order uint64
 		for input := range inputChan {
 			wg.Add(1)
-			processChan <- &processInput{input.Value, input.Order, &wg}
+			processChan <- &processInput{input.Value, order, &wg}
+			order++
 		}
 		// Wait till execution is complete
 		wg.Wait()
