@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-// OrderedInput input for Process
+// OrderedInput input for Processing
 type OrderedInput struct {
 	Value interface{}
 }
@@ -17,7 +17,9 @@ type OrderedOutput struct {
 // WorkFunction the function which performs work
 type WorkFunction func(interface{}) interface{}
 
-// Process processes work function based on input
+// Process processes work function based on input.
+// It Accepts an OrderedInput read channel, work function and concurrent go routine pool size.
+// It Returns an OrderedOutput channel.
 func Process(inputChan <-chan *OrderedInput, wf WorkFunction, poolSize int) <-chan *OrderedOutput {
 	outputChan := make(chan *OrderedOutput)
 	type processInput struct {
