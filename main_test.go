@@ -18,8 +18,9 @@ func Test(t *testing.T) {
 		max := 10
 		inputChan := make(chan *OrderedInput)
 		wg := &sync.WaitGroup{}
+
+		outChan := Process(inputChan, workFn, 10)
 		go func(t *testing.T) {
-			outChan := Process(inputChan, workFn, 10)
 			for out := range outChan {
 				if _, ok := out.Value.(int); !ok {
 					t.Error("Invalid output")
