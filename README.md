@@ -26,8 +26,8 @@ func main() {
 	max := 100
 	inputChan := make(chan *concurrently.OrderedInput)
 	wg := &sync.WaitGroup{}
-	
-	outChan := concurrently.Process(inputChan, workFn, 10)
+
+	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10})
 	go func() {
 		for out := range outChan {
 			fmt.Println(out.Value)

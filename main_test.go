@@ -19,7 +19,7 @@ func Test(t *testing.T) {
 		inputChan := make(chan *OrderedInput)
 		wg := &sync.WaitGroup{}
 
-		outChan := Process(inputChan, workFn, 10)
+		outChan := Process(inputChan, workFn, &Options{PoolSize: 10})
 		go func(t *testing.T) {
 			for out := range outChan {
 				if _, ok := out.Value.(int); !ok {
