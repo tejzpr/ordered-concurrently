@@ -34,6 +34,10 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, options *Options) 
 	}
 	go func() {
 		processors := options.PoolSize
+		if processors == 0 {
+			// Set a minimum number of processors
+			processors = 1
+		}
 		wg := sync.WaitGroup{}
 		processChan := make(chan *processInput)
 
