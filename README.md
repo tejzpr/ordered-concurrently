@@ -28,9 +28,9 @@ func workFn(val interface{}) interface{} {
 ```go
 func main() {
 	max := 10
-	inputChan := make(chan *OrderedInput)
+	inputChan := make(chan *concurrently.OrderedInput)
 	doneChan := make(chan bool)
-	outChan := Process(inputChan, workFn, &Options{})
+	outChan := Process(inputChan, workFn, &concurrently.Options{})
 	go func() {
 		for {
 			select {
