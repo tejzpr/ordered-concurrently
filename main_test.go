@@ -10,7 +10,7 @@ import (
 // The work that needs to be performed
 func workFn(val interface{}) interface{} {
 	time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-	return val
+	return val.(int) * 2
 }
 
 func Test(t *testing.T) {

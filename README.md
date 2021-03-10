@@ -21,36 +21,10 @@ import concurrently "github.com/tejzpr/ordered-concurrently"
 // The work that needs to be performed
 func workFn(val interface{}) interface{} {
 	time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-	return val
+	return val.(int) * 2
 }
 ```
 ## Run
-```go
-func main() {
-	max := 100
-	inputChan := make(chan *concurrently.OrderedInput)
-	wg := &sync.WaitGroup{}
-
-	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10})
-	go func() {
-		for out := range outChan {
-			log.Println(out.Value)
-			wg.Done()
-		}
-	}()
-
-	// Create work and sent to input channel
-	// Output will be in the order of input
-	for work := 0; work < max; work++ {
-		wg.Add(1)
-		input := &OrderedInput{work}
-		inputChan <- input
-	}
-	
-	wg.Wait()
-}
-```
-## Run - Without using Waitgroups
 ```go
 func main() {
 	max := 10
@@ -72,12 +46,38 @@ func main() {
 
 	// Create work and the associated order
 	for work := 0; work < max; work++ {
-		input := &OrderedInput{work}
+		input := &concurrently.OrderedInput{work}
 		inputChan <- input
 	}
 	// Should close the channel!
 	close(inputChan)
 	<-doneChan
+}
+```
+## Run - Using Workgroup
+```go
+func main() {
+	max := 100
+	inputChan := make(chan *concurrently.OrderedInput)
+	wg := &sync.WaitGroup{}
+
+	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10})
+	go func() {
+		for out := range outChan {
+			log.Println(out.Value)
+			wg.Done()
+		}
+	}()
+
+	// Create work and sent to input channel
+	// Output will be in the order of input
+	for work := 0; work < max; work++ {
+		wg.Add(1)
+		input := &concurrently.OrderedInput{work}
+		inputChan <- input
+	}
+	
+	wg.Wait()
 }
 ```
 # Credits
