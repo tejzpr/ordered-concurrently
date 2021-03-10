@@ -33,7 +33,7 @@ func main() {
 	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10})
 	go func() {
 		for out := range outChan {
-			fmt.Println(out.Value)
+			log.Println(out.Value)
 			wg.Done()
 		}
 	}()
@@ -48,7 +48,36 @@ func main() {
 	
 	wg.Wait()
 }
+```
+## Run - Without using Waitgroups
+```go
+func main() {
+	max := 10
+	inputChan := make(chan *OrderedInput)
+	doneChan := make(chan bool)
+	outChan := Process(inputChan, workFn, &Options{})
+	go func() {
+		for {
+			select {
+			case out, chok := <-outChan:
+				if chok {
+					log.Println(out.Value)
+				} else {
+					doneChan <- true
+				}
+			}
+		}
+	}()
 
+	// Create work and the associated order
+	for work := 0; work < max; work++ {
+		input := &OrderedInput{work}
+		inputChan <- input
+	}
+	// Should close the channel!
+	close(inputChan)
+	<-doneChan
+}
 ```
 # Credits
 Thanks to [u/justinisrael](https://www.reddit.com/user/justinisrael/) for inputs on improving resource usage.

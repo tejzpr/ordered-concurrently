@@ -38,53 +38,87 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, options *Options) 
 			// Set a minimum number of processors
 			processors = 1
 		}
-		wg := sync.WaitGroup{}
 		processChan := make(chan *processInput)
-
 		aggregatorChan := make(chan *processInput)
-
+		wg := sync.WaitGroup{}
+		doneChan := make(chan bool)
 		// Go routine to print data in order
 		go func() {
 			var current uint64
 			outputMap := make(map[uint64]*processInput)
-			for item := range aggregatorChan {
-				if item.order != current {
-					outputMap[item.order] = item
-					continue
-				}
-				for {
-					if item == nil {
-						break
+			for {
+				select {
+				case item, ok := <-aggregatorChan:
+					if ok {
+						if item.order != current {
+							outputMap[item.order] = item
+							continue
+						}
+						for {
+							if item == nil {
+								break
+							}
+							outputChan <- &OrderedOutput{Value: item.value}
+							item.wg.Done()
+							delete(outputMap, current)
+							current++
+							item = outputMap[current]
+						}
+					} else {
+						aggregatorChan = nil
 					}
-					outputChan <- &OrderedOutput{Value: item.value}
-					item.wg.Done()
-					delete(outputMap, current)
-					current++
-					item = outputMap[current]
+				}
+				if aggregatorChan == nil {
+					close(outputChan)
+					doneChan <- true
 				}
 			}
 		}()
 
+		closeOnce := sync.Once{}
 		// Create a goroutine pool
 		for i := 0; i < processors; i++ {
 			go func() {
-				for input := range processChan {
-					// Process work
-					input.value = wf(input.value)
-					aggregatorChan <- input
+				for {
+					select {
+					case input, ok := <-processChan:
+						if ok {
+							input.value = wf(input.value)
+							wg.Add(1)
+							input.wg = &wg
+							aggregatorChan <- input
+						} else {
+							processChan = nil
+						}
+					}
+					if processChan == nil {
+						wg.Wait()
+						// Safe. This will be triggered only once WG has finished
+						closeOnce.Do(func() {
+							close(aggregatorChan)
+						})
+					}
 				}
 			}()
 		}
 
 		var order uint64
-		for input := range inputChan {
-			wg.Add(1)
-			processChan <- &processInput{input.Value, order, &wg}
-			order++
+		for {
+			select {
+			case input, ok := <-inputChan:
+				if ok {
+					processChan <- &processInput{input.Value, order, nil}
+					order++
+				} else {
+					inputChan = nil
+				}
+			}
+			if inputChan == nil {
+				close(processChan)
+				break
+			}
 		}
-		// Wait till execution is complete
-		wg.Wait()
-		close(outputChan)
+		<-doneChan
 	}()
 	return outputChan
 }
