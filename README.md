@@ -11,7 +11,7 @@ A go module that processes work concurrently and returns output in a channel in 
 ```go
 go get github.com/tejzpr/ordered-concurrently
 ```
-## Import Module
+## Import Module in your source code
 ```go
 import concurrently "github.com/tejzpr/ordered-concurrently" 
 ```
