@@ -19,4 +19,16 @@ jobs:
         go-version: 1.15
 
     - name: Test
-      run: go test -v ./...
+      run: go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
+      
+    - name : Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.txt
+        flags: unittests 
+        fail_ci_if_error: true 
+        verbose: true 
+
+
+

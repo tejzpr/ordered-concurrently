@@ -1,4 +1,5 @@
 <a href="https://github.com/tejzpr/ordered-concurrently/actions/workflows/tests.yml"><img src="https://github.com/tejzpr/ordered-concurrently/actions/workflows/tests.yml/badge.svg" alt="Tests"/></a>
+[![codecov](https://codecov.io/gh/tejzpr/ordered-concurrently/branch/master/graph/badge.svg?token=6WIXWRO3EW)](https://codecov.io/gh/tejzpr/ordered-concurrently)
 [![Go Reference](https://pkg.go.dev/badge/github.com/tejzpr/ordered-concurrently.svg)](https://pkg.go.dev/github.com/tejzpr/ordered-concurrently)
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/tejzpr/ordered-concurrently)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tejzpr/ordered-concurrently)](https://goreportcard.com/report/github.com/tejzpr/ordered-concurrently)
