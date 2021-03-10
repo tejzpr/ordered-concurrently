@@ -9,7 +9,7 @@ A go module that processes work concurrently and returns output in a channel in 
 # Usage 
 ## Get Module
 ```go
-got get github.com/tejzpr/ordered-concurrently
+go get github.com/tejzpr/ordered-concurrently
 ```
 ## Import Module
 ```go
