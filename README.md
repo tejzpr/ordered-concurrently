@@ -7,7 +7,11 @@
 A go module that processes work concurrently and returns output in a channel in the order of input
 
 # Usage 
-## Import package
+## Get Module
+```go
+got get github.com/tejzpr/ordered-concurrently
+```
+## Import Module
 ```go
 import concurrently "github.com/tejzpr/ordered-concurrently" 
 ```
