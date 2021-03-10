@@ -20,10 +20,13 @@ func Test(t *testing.T) {
 		wg := &sync.WaitGroup{}
 
 		outChan := Process(inputChan, workFn, &Options{PoolSize: 10})
+		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
 				if _, ok := out.Value.(int); !ok {
 					t.Error("Invalid output")
+				} else {
+					counter++
 				}
 				wg.Done()
 			}
@@ -36,30 +39,45 @@ func Test(t *testing.T) {
 			inputChan <- input
 		}
 		wg.Wait()
+		if counter != max {
+			t.Error("Input count does not match output count")
+		}
 		t.Log("Test with Preset Pool Size Completed")
 	})
 	t.Run("Test with default Pool Size", func(t *testing.T) {
 		max := 10
 		inputChan := make(chan *OrderedInput)
-		wg := &sync.WaitGroup{}
-
+		doneChan := make(chan bool)
 		outChan := Process(inputChan, workFn, &Options{})
 		go func(t *testing.T) {
-			for out := range outChan {
-				if _, ok := out.Value.(int); !ok {
-					t.Error("Invalid output")
+			counter := 0
+			for {
+				select {
+				case out, chok := <-outChan:
+					if chok {
+						if _, ok := out.Value.(int); !ok {
+							t.Error("Invalid output")
+						} else {
+							counter++
+						}
+					} else {
+						if counter != max {
+							t.Error("Input count does not match output count")
+						}
+						doneChan <- true
+					}
 				}
-				wg.Done()
 			}
 		}(t)
 
 		// Create work and the associated order
 		for work := 0; work < max; work++ {
-			wg.Add(1)
+
 			input := &OrderedInput{work}
 			inputChan <- input
 		}
-		wg.Wait()
+		close(inputChan)
+		<-doneChan
 		t.Log("Test with default Pool Size Completed")
 	})
 }
