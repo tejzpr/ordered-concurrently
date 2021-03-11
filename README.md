@@ -30,7 +30,7 @@ func main() {
 	max := 10
 	inputChan := make(chan *concurrently.OrderedInput)
 	doneChan := make(chan bool)
-	outChan := Process(inputChan, workFn, &concurrently.Options{PoolSize: 10})
+	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10})
 	go func() {
 		for {
 			select {
