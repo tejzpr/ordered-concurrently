@@ -16,7 +16,8 @@ type OrderedOutput struct {
 
 // Options options for Process
 type Options struct {
-	PoolSize int
+	PoolSize         int
+	OutChannelBuffer int
 }
 
 // WorkFunction the function which performs work
@@ -26,7 +27,7 @@ type WorkFunction func(interface{}) interface{}
 // It Accepts an OrderedInput read channel, work function and concurrent go routine pool size.
 // It Returns an OrderedOutput channel.
 func Process(inputChan <-chan *OrderedInput, wf WorkFunction, options *Options) <-chan *OrderedOutput {
-	outputChan := make(chan *OrderedOutput)
+	outputChan := make(chan *OrderedOutput, options.OutChannelBuffer)
 	type processInput struct {
 		value interface{}
 		order uint64

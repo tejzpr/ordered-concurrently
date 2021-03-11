@@ -28,9 +28,10 @@ func workFn(val interface{}) interface{} {
 ```go
 func main() {
 	max := 10
+	// Can be a non blocking channel as well
 	inputChan := make(chan *concurrently.OrderedInput)
 	doneChan := make(chan bool)
-	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10})
+	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10, OutChannelBufferSize: 2})
 	go func() {
 		for {
 			select {
@@ -58,6 +59,7 @@ func main() {
 ```go
 func main() {
 	max := 100
+	// Can be a non blocking channel as well
 	inputChan := make(chan *concurrently.OrderedInput)
 	wg := &sync.WaitGroup{}
 

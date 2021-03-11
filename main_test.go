@@ -48,7 +48,7 @@ func Test(t *testing.T) {
 		max := 10
 		inputChan := make(chan *OrderedInput)
 		doneChan := make(chan bool)
-		outChan := Process(inputChan, workFn, &Options{})
+		outChan := Process(inputChan, workFn, &Options{OutChannelBuffer: 2})
 		go func(t *testing.T) {
 			counter := 0
 			for {
