@@ -46,73 +46,66 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, options *Options) 
 		// Go routine to print data in order
 		go func() {
 			var current uint64
-			outputMap := make(map[uint64]*processInput)
-			for {
-				select {
-				case item, ok := <-aggregatorChan:
-					if ok {
-						if item.order != current {
-							outputMap[item.order] = item
-							continue
-						}
-						for {
-							if item == nil {
-								break
-							}
-							outputChan <- &OrderedOutput{Value: item.value}
-							item.wg.Done()
-							delete(outputMap, current)
-							current++
-							item = outputMap[current]
-						}
-					} else {
-						aggregatorChan = nil
-					}
+			outputMap := make(map[uint64]*processInput, options.PoolSize)
+			defer func() {
+				close(outputChan)
+				doneSemaphoreChan <- true
+			}()
+			for item := range aggregatorChan {
+				if item.order != current {
+					outputMap[item.order] = item
+					continue
 				}
-				if aggregatorChan == nil {
-					close(outputChan)
-					doneSemaphoreChan <- true
+				for {
+					if item == nil {
+						break
+					}
+					outputChan <- &OrderedOutput{Value: item.value}
+					item.wg.Done()
+					delete(outputMap, current)
+					current++
+					item = outputMap[current]
 				}
 			}
 		}()
 
-		inputClosedSemaphoreChan := make(chan bool)
+		poolWg := sync.WaitGroup{}
+		poolWg.Add(processors)
 		// Create a goroutine pool
 		for i := 0; i < processors; i++ {
-			go func() {
+			go func(worker int) {
+				defer func() {
+					poolWg.Done()
+				}()
 				for input := range processChan {
 					wg.Add(1)
 					input.value = wf(input.value)
 					input.wg = &wg
 					aggregatorChan <- input
-					select {
-					case <-inputClosedSemaphoreChan:
-						wg.Wait()
-						close(aggregatorChan)
-					default:
-						continue
-					}
 				}
-			}()
+			}(i)
 		}
 
-		var order uint64
-		for {
-			select {
-			case input, ok := <-inputChan:
-				if ok {
-					processChan <- &processInput{input.Value, order, nil}
-					order++
-				} else {
-					inputChan = nil
+		go func() {
+			poolWg.Wait()
+			close(aggregatorChan)
+		}()
+
+		go func() {
+			var order uint64
+			for {
+				select {
+				case input, ok := <-inputChan:
+					if ok {
+						processChan <- &processInput{input.Value, order, nil}
+						order++
+					} else {
+						close(processChan)
+						return
+					}
 				}
 			}
-			if inputChan == nil {
-				close(processChan)
-				inputClosedSemaphoreChan <- true
-				break
-			}
-		}
+		}()
 		<-doneSemaphoreChan
 	}()
 	return outputChan
