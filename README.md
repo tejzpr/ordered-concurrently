@@ -47,7 +47,7 @@ func main() {
 		input := &concurrently.OrderedInput{work}
 		inputChan <- input
 	}
-	
+	close(inputChan)
 	wg.Wait()
 }
 ```
