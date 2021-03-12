@@ -79,6 +79,42 @@ func Test(t *testing.T) {
 		}
 		t.Log("Test with Default Pool Size Completed")
 	})
+	t.Run("Test channel based closers", func(t *testing.T) {
+		max := 10
+		inputChan := make(chan *OrderedInput)
+		doneChan := make(chan bool)
+		outChan := Process(inputChan, workFn, &Options{OutChannelBuffer: 2})
+		go func(t *testing.T) {
+			counter := 0
+			for {
+				select {
+				case out, chok := <-outChan:
+					if chok {
+						if _, ok := out.Value.(int); !ok {
+							t.Error("Invalid output")
+						} else {
+							counter++
+						}
+					} else {
+						if counter != max {
+							t.Error("Input count does not match output count")
+						}
+						doneChan <- true
+					}
+				}
+			}
+		}(t)
+
+		// Create work and the associated order
+		for work := 0; work < max; work++ {
+
+			input := &OrderedInput{work}
+			inputChan <- input
+		}
+		close(inputChan)
+		<-doneChan
+		t.Log("Test channel based closers Completed")
+	})
 	t.Run("Test Zero Load", func(t *testing.T) {
 		max := 10
 		inputChan := make(chan *OrderedInput)
