@@ -27,37 +27,6 @@ func workFn(val interface{}) interface{} {
 ## Run
 ```go
 func main() {
-	max := 10
-	// Can be a non blocking channel as well
-	inputChan := make(chan *concurrently.OrderedInput)
-	doneChan := make(chan bool)
-	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10, OutChannelBufferSize: 2})
-	go func() {
-		for {
-			select {
-			case out, chok := <-outChan:
-				if chok {
-					log.Println(out.Value)
-				} else {
-					doneChan <- true
-				}
-			}
-		}
-	}()
-
-	// Create work and the associated order
-	for work := 0; work < max; work++ {
-		input := &concurrently.OrderedInput{work}
-		inputChan <- input
-	}
-	// Should close the channel!
-	close(inputChan)
-	<-doneChan
-}
-```
-## Run - Using Workgroup
-```go
-func main() {
 	max := 100
 	// Can be a non blocking channel as well
 	inputChan := make(chan *concurrently.OrderedInput)
