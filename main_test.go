@@ -112,4 +112,27 @@ func Test(t *testing.T) {
 		}
 		t.Log("Test with Default Pool Size and Zero Load Completed")
 	})
+	t.Run("Test without workgroup", func(t *testing.T) {
+		max := 10
+		inputChan := make(chan *OrderedInput)
+		output := Process(inputChan, zeroLoadWorkFn, &Options{PoolSize: 10, OutChannelBuffer: 10})
+		go func() {
+			for work := 0; work < max; work++ {
+				inputChan <- &OrderedInput{work}
+			}
+			close(inputChan)
+		}()
+		counter := 0
+		for out := range output {
+			if _, ok := out.Value.(int); !ok {
+				t.Error("Invalid output")
+			} else {
+				counter++
+			}
+		}
+		if counter != max {
+			t.Error("Input count does not match output count")
+		}
+		t.Log("Test without workgroup Completed")
+	})
 }

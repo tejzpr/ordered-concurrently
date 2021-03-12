@@ -25,6 +25,24 @@ func workFn(val interface{}) interface{} {
 }
 ```
 ## Run
+### Example - 1
+```go
+func main() {
+	max := 10
+	inputChan := make(chan *concurrently.OrderedInput)
+	output := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10, OutChannelBuffer: 10})
+	go func() {
+		for work := 0; work < max; work++ {
+			inputChan <- &concurrently.OrderedInput{work}
+		}
+		close(inputChan)
+	}()
+	for out := range output {
+		log.Println(out.Value)
+	}
+}
+```
+### Example - 2
 ```go
 func main() {
 	max := 100
