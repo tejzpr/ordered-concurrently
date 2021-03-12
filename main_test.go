@@ -18,7 +18,7 @@ func zeroLoadWorkFn(val interface{}) interface{} {
 	return val.(int)
 }
 
-func Test(t *testing.T) {
+func Test1(t *testing.T) {
 	t.Run("Test with Preset Pool Size", func(t *testing.T) {
 		max := 10
 		inputChan := make(chan *OrderedInput)
@@ -50,6 +50,9 @@ func Test(t *testing.T) {
 		}
 		t.Log("Test with Preset Pool Size Completed")
 	})
+}
+
+func Test2(t *testing.T) {
 	t.Run("Test with default Pool Size", func(t *testing.T) {
 		max := 10
 		inputChan := make(chan *OrderedInput)
@@ -81,6 +84,9 @@ func Test(t *testing.T) {
 		}
 		t.Log("Test with Default Pool Size Completed")
 	})
+}
+
+func Test3(t *testing.T) {
 	t.Run("Test Zero Load", func(t *testing.T) {
 		max := 10
 		inputChan := make(chan *OrderedInput)
@@ -112,6 +118,10 @@ func Test(t *testing.T) {
 		}
 		t.Log("Test with Default Pool Size and Zero Load Completed")
 	})
+
+}
+
+func Test4(t *testing.T) {
 	t.Run("Test without workgroup", func(t *testing.T) {
 		max := 10
 		inputChan := make(chan *OrderedInput)
