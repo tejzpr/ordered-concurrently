@@ -1,6 +1,6 @@
 package orderedconcurrently
 
-type processInputHeap []processInput
+type processInputHeap []*processInput
 
 func (h processInputHeap) Len() int {
 	return len(h)
@@ -15,7 +15,7 @@ func (h processInputHeap) Swap(i, j int) {
 }
 
 func (h *processInputHeap) Push(x interface{}) {
-	*h = append(*h, x.(processInput))
+	*h = append(*h, x.(*processInput))
 }
 
 func (h processInputHeap) Peek() interface{} {
