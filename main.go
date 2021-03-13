@@ -46,24 +46,25 @@ func Process(inputChan <-chan OrderedInput, options *Options) <-chan OrderedOutp
 		// Go routine to print data in order
 		go func() {
 			var current uint64
-			outputMap := make(map[uint64]processInput, options.PoolSize)
+			outputMap := make(map[uint64]*processInput, options.PoolSize)
 			defer func() {
 				close(outputChan)
 				doneSemaphoreChan <- true
 			}()
 			for item := range aggregatorChan {
+				tmp := &item
 				if item.order != current {
-					outputMap[item.order] = item
+					outputMap[item.order] = tmp
 					continue
 				}
 				for {
-					if item.value == nil {
+					if tmp == nil {
 						break
 					}
-					outputChan <- OrderedOutput{Value: item.value}
+					outputChan <- OrderedOutput{Value: tmp.value}
 					delete(outputMap, current)
 					current++
-					item = outputMap[current]
+					tmp = outputMap[current]
 				}
 			}
 		}()
