@@ -20,6 +20,7 @@ type Options struct {
 	OutChannelBuffer int
 }
 
+// WorkFunction interface
 type WorkFunction interface {
 	Run() interface{}
 }
@@ -42,18 +43,17 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 		}
 		processChan := make(chan processInput, options.PoolSize)
 		aggregatorChan := make(chan processInput, options.PoolSize)
-		doneSemaphoreChan := make(chan bool)
 
 		// Go routine to print data in order
 		go func() {
 			var current uint64
+			var tmp *processInput
 			outputMap := make(map[uint64]*processInput, options.PoolSize)
 			defer func() {
 				close(outputChan)
-				doneSemaphoreChan <- true
 			}()
 			for item := range aggregatorChan {
-				tmp := &item
+				tmp = &item
 				if item.order != current {
 					outputMap[item.order] = tmp
 					continue
@@ -101,8 +101,6 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 				order++
 			}
 		}()
-
-		<-doneSemaphoreChan
 	}()
 	return outputChan
 }
