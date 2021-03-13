@@ -31,7 +31,6 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, options *Options) 
 	type processInput struct {
 		value interface{}
 		order uint64
-		wg    *sync.WaitGroup
 	}
 	go func() {
 		processors := options.PoolSize
@@ -61,7 +60,6 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, options *Options) 
 						break
 					}
 					outputChan <- &OrderedOutput{Value: item.value}
-					item.wg.Done()
 					delete(outputMap, current)
 					current++
 					item = outputMap[current]
@@ -80,7 +78,6 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, options *Options) 
 				for input := range processChan {
 					wg.Add(1)
 					input.value = wf(input.value)
-					input.wg = &wg
 					aggregatorChan <- input
 				}
 			}(i)
@@ -97,7 +94,7 @@ func Process(inputChan <-chan *OrderedInput, wf WorkFunction, options *Options) 
 				select {
 				case input, ok := <-inputChan:
 					if ok {
-						processChan <- &processInput{input.Value, order, nil}
+						processChan <- &processInput{input.Value, order}
 						order++
 					} else {
 						close(processChan)
