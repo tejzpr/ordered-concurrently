@@ -7,32 +7,30 @@ import (
 	"time"
 )
 
-// The work that needs to be performed
-func workFn(val interface{}) WorkFunction {
-	return func() interface{} {
-		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-		return val.(int) * 2
-	}
+type zeroLoadWorker int
+
+func (w zeroLoadWorker) Run() interface{} {
+	return w * 2
 }
 
-// The work that needs to be performed
-func zeroLoadWorkFn(val interface{}) WorkFunction {
-	return func() interface{} {
-		return val.(int)
-	}
+type loadWorker int
+
+func (w loadWorker) Run() interface{} {
+	time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+	return w * 2
 }
 
 func Test1(t *testing.T) {
 	t.Run("Test with Preset Pool Size", func(t *testing.T) {
 		max := 10
-		inputChan := make(chan OrderedInput)
+		inputChan := make(chan WorkFunction)
 		wg := &sync.WaitGroup{}
 
 		outChan := Process(inputChan, &Options{PoolSize: 10})
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(int); !ok {
+				if _, ok := out.Value.(loadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -44,8 +42,7 @@ func Test1(t *testing.T) {
 		// Create work and the associated order
 		for work := 0; work < max; work++ {
 			wg.Add(1)
-			input := OrderedInput{WorkFn: workFn(work)}
-			inputChan <- input
+			inputChan <- loadWorker(work)
 		}
 		close(inputChan)
 		wg.Wait()
@@ -59,14 +56,14 @@ func Test1(t *testing.T) {
 func Test2(t *testing.T) {
 	t.Run("Test with default Pool Size", func(t *testing.T) {
 		max := 10
-		inputChan := make(chan OrderedInput)
+		inputChan := make(chan WorkFunction)
 		wg := &sync.WaitGroup{}
 
 		outChan := Process(inputChan, &Options{OutChannelBuffer: 2})
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(int); !ok {
+				if _, ok := out.Value.(loadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -78,8 +75,7 @@ func Test2(t *testing.T) {
 		// Create work and the associated order
 		for work := 0; work < max; work++ {
 			wg.Add(1)
-			input := OrderedInput{WorkFn: workFn(work)}
-			inputChan <- input
+			inputChan <- loadWorker(work)
 		}
 		close(inputChan)
 		wg.Wait()
@@ -93,14 +89,14 @@ func Test2(t *testing.T) {
 func Test3(t *testing.T) {
 	t.Run("Test Zero Load", func(t *testing.T) {
 		max := 10
-		inputChan := make(chan OrderedInput)
+		inputChan := make(chan WorkFunction)
 		wg := &sync.WaitGroup{}
 
 		outChan := Process(inputChan, &Options{OutChannelBuffer: 2})
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(int); !ok {
+				if _, ok := out.Value.(zeroLoadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -112,8 +108,7 @@ func Test3(t *testing.T) {
 		// Create work and the associated order
 		for work := 0; work < max; work++ {
 			wg.Add(1)
-			input := OrderedInput{WorkFn: zeroLoadWorkFn(work)}
-			inputChan <- input
+			inputChan <- zeroLoadWorker(work)
 		}
 		close(inputChan)
 		wg.Wait()
@@ -128,17 +123,17 @@ func Test3(t *testing.T) {
 func Test4(t *testing.T) {
 	t.Run("Test without workgroup", func(t *testing.T) {
 		max := 10
-		inputChan := make(chan OrderedInput)
+		inputChan := make(chan WorkFunction)
 		output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 		go func() {
 			for work := 0; work < max; work++ {
-				inputChan <- OrderedInput{WorkFn: zeroLoadWorkFn(work)}
+				inputChan <- zeroLoadWorker(work)
 			}
 			close(inputChan)
 		}()
 		counter := 0
 		for out := range output {
-			if _, ok := out.Value.(int); !ok {
+			if _, ok := out.Value.(zeroLoadWorker); !ok {
 				t.Error("Invalid output")
 			} else {
 				counter++
@@ -153,11 +148,11 @@ func Test4(t *testing.T) {
 
 func BenchmarkOC(b *testing.B) {
 	max := 1000000
-	inputChan := make(chan OrderedInput)
+	inputChan := make(chan WorkFunction)
 	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 	go func() {
 		for work := 0; work < max; work++ {
-			inputChan <- OrderedInput{WorkFn: zeroLoadWorkFn(work)}
+			inputChan <- zeroLoadWorker(work)
 		}
 		close(inputChan)
 	}()
