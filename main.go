@@ -1,6 +1,7 @@
 package orderedconcurrently
 
 import (
+	"container/heap"
 	"sync"
 )
 
@@ -20,6 +21,12 @@ type Options struct {
 	OutChannelBuffer int
 }
 
+type processInput struct {
+	workFn WorkFunction
+	order  uint64
+	value  interface{}
+}
+
 // WorkFunction the function which performs work
 type WorkFunction func() interface{}
 
@@ -27,11 +34,7 @@ type WorkFunction func() interface{}
 // It Accepts an OrderedInput read channel, work function and concurrent go routine pool size.
 // It Returns an OrderedOutput channel.
 func Process(inputChan <-chan OrderedInput, options *Options) <-chan OrderedOutput {
-	type processInput struct {
-		workFn WorkFunction
-		order  uint64
-		value  interface{}
-	}
+
 	outputChan := make(chan OrderedOutput, options.OutChannelBuffer)
 
 	go func() {
@@ -46,25 +49,24 @@ func Process(inputChan <-chan OrderedInput, options *Options) <-chan OrderedOutp
 		// Go routine to print data in order
 		go func() {
 			var current uint64
-			outputMap := make(map[uint64]processInput, options.PoolSize)
+			outputHeap := &processInputHeap{}
 			defer func() {
 				close(outputChan)
 				doneSemaphoreChan <- true
 			}()
+
 			for item := range aggregatorChan {
-				if item.order != current {
-					outputMap[item.order] = item
+				heap.Push(outputHeap, item)
+				top := outputHeap.Peek()
+				if top != nil && top.(processInput).order == current {
+					outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(processInput).value}
+					current++
 					continue
 				}
-				for {
-					if item.value == nil {
-						break
-					}
-					outputChan <- OrderedOutput{Value: item.value}
-					delete(outputMap, current)
-					current++
-					item = outputMap[current]
-				}
+			}
+
+			for outputHeap.Len() > 0 {
+				outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(processInput).value}
 			}
 		}()
 
