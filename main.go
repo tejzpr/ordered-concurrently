@@ -43,7 +43,7 @@ func Process(inputChan <-chan OrderedInput, options *Options) <-chan OrderedOutp
 			options.PoolSize = 1
 		}
 		processChan := make(chan processInput, options.PoolSize)
-		aggregatorChan := make(chan *processInput, options.PoolSize)
+		aggregatorChan := make(chan processInput, options.PoolSize)
 		doneSemaphoreChan := make(chan bool)
 
 		// Go routine to print data in order
@@ -56,7 +56,8 @@ func Process(inputChan <-chan OrderedInput, options *Options) <-chan OrderedOutp
 			}()
 
 			for item := range aggregatorChan {
-				heap.Push(outputHeap, item)
+				tmp := &item
+				heap.Push(outputHeap, tmp)
 				top := outputHeap.Peek()
 				if top != nil && top.(*processInput).order == current {
 					outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(*processInput).value}
@@ -81,7 +82,7 @@ func Process(inputChan <-chan OrderedInput, options *Options) <-chan OrderedOutp
 				for input := range processChan {
 					input.value = input.workFn()
 					input.workFn = nil
-					aggregatorChan <- &input
+					aggregatorChan <- input
 				}
 			}(i)
 		}
