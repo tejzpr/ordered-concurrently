@@ -232,9 +232,9 @@ func TestStreamingInput(t *testing.T) {
 		}()
 
 		time.Sleep(1600 * time.Millisecond)
-		close(inputChan)
 		ticker.Stop()
 		done <- true
+		close(inputChan)
 		wg.Wait()
 		isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
 			return res[i] < res[j]

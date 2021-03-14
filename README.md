@@ -79,9 +79,9 @@ func main() {
 	}()
 
 	time.Sleep(1600 * time.Millisecond)
-	close(inputChan)
 	ticker.Stop()
 	done <- true
+	close(inputChan)
 	wg.Wait()
 
 	// Check if output is sorted
