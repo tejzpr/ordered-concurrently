@@ -16,7 +16,7 @@ go get github.com/tejzpr/ordered-concurrently
 ```go
 import concurrently "github.com/tejzpr/ordered-concurrently" 
 ```
-## Create a work function
+## Create a work function by implementing WorkFunction interface
 ```go
 // Create a type based on your input to the work function
 type loadWorker int
