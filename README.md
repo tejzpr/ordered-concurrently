@@ -70,18 +70,27 @@ func main() {
 		}
 	}()
 
+	var res []loadWorker
 	go func() {
 		for out := range output {
-			log.Println(out.Value.(loadWorker))
+			res = append(res, out.Value.(loadWorker))
 			wg.Done()
 		}
 	}()
 
 	time.Sleep(1600 * time.Millisecond)
-	ticker.Stop()
 	close(inputChan)
+	ticker.Stop()
 	done <- true
 	wg.Wait()
+
+	// Check if output is sorted
+	isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
+		return res[i] < res[j]
+	})
+	if !isSorted {
+		log.Println("output is not sorted")
+	}
 }
 ```
 # Credits
