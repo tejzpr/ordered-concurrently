@@ -199,6 +199,53 @@ func TestSortedDataMultiple(t *testing.T) {
 	}
 }
 
+func TestStreamingInput(t *testing.T) {
+	t.Run("Test streaming input", func(t *testing.T) {
+		inputChan := make(chan WorkFunction, 10)
+		output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+
+		ticker := time.NewTicker(100 * time.Millisecond)
+		done := make(chan bool)
+		wg := &sync.WaitGroup{}
+		go func() {
+			input := 0
+			for {
+				select {
+				case <-done:
+					return
+				case <-ticker.C:
+					inputChan <- zeroLoadWorker(input)
+					wg.Add(1)
+					input++
+				default:
+				}
+			}
+		}()
+
+		var res []zeroLoadWorker
+
+		go func() {
+			for out := range output {
+				res = append(res, out.Value.(zeroLoadWorker))
+				wg.Done()
+			}
+		}()
+
+		time.Sleep(1600 * time.Millisecond)
+		ticker.Stop()
+		close(inputChan)
+		done <- true
+		wg.Wait()
+		isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
+			return res[i] < res[j]
+		})
+		if !isSorted {
+			t.Error("output is not sorted")
+		}
+		t.Log("Test streaming input")
+	})
+}
+
 func BenchmarkOC(b *testing.B) {
 	max := 100000
 	inputChan := make(chan WorkFunction)

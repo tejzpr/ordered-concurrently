@@ -13,7 +13,8 @@ type Options struct {
 
 // OrderedOutput is the output channel type from Process
 type OrderedOutput struct {
-	Value interface{}
+	Value     interface{}
+	Remaining func() int
 }
 
 // WorkFunction interface
@@ -35,7 +36,6 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 		}
 		processChan := make(chan *processInput, options.PoolSize)
 		aggregatorChan := make(chan *processInput, options.PoolSize)
-		doneSemaphoreChan := make(chan bool)
 
 		// Go routine to print data in order
 		go func() {
@@ -43,19 +43,20 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 			outputHeap := &processInputHeap{}
 			defer func() {
 				close(outputChan)
-				doneSemaphoreChan <- true
 			}()
-
+			remaining := func() int {
+				return outputHeap.Len()
+			}
 			for item := range aggregatorChan {
 				heap.Push(outputHeap, item)
 				for top, ok := outputHeap.Peek(); ok && top.order == current; {
-					outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(*processInput).value}
+					outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(*processInput).value, Remaining: remaining}
 					current++
 				}
 			}
 
 			for outputHeap.Len() > 0 {
-				outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(*processInput).value}
+				outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(*processInput).value, Remaining: remaining}
 			}
 		}()
 
@@ -90,8 +91,6 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 				order++
 			}
 		}()
-
-		<-doneSemaphoreChan
 	}()
 	return outputChan
 }

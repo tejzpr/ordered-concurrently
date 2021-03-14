@@ -46,30 +46,41 @@ func main() {
 	}
 }
 ```
-### Example - 2
+### Example - 2 - Process unknown number of inputs
 ```go
 func main() {
-	max := 100
-	// Can be a non blocking channel as well
-	inputChan := make(chan concurrently.WorkFunction)
-	wg := &sync.WaitGroup{}
+	inputChan := make(chan concurrently.WorkFunction, 10)
+	output := concurrently.Process(inputChan, &concurrently.Options{PoolSize: 10, OutChannelBuffer: 10})
 
-	outChan := concurrently.Process(inputChan, &concurrently.Options{OutChannelBuffer: 2})
+	ticker := time.NewTicker(100 * time.Millisecond)
+	done := make(chan bool)
+	wg := &sync.WaitGroup{}
 	go func() {
-		for out := range outChan {
-			log.Println(out.Value)
+		input := 0
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				inputChan <- loadWorker(input)
+				wg.Add(1)
+				input++
+			default:
+			}
+		}
+	}()
+
+	go func() {
+		for out := range output {
+			log.Println(out.Value.(loadWorker))
 			wg.Done()
 		}
 	}()
 
-	// Create work and sent to input channel
-	// Output will be in the order of input
-	for work := 0; work < max; work++ {
-		wg.Add(1)
-		input := loadWorker(work)
-		inputChan <- input
-	}
+	time.Sleep(1600 * time.Millisecond)
+	ticker.Stop()
 	close(inputChan)
+	done <- true
 	wg.Wait()
 }
 ```
