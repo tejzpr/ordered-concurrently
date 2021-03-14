@@ -18,9 +18,11 @@ import concurrently "github.com/tejzpr/ordered-concurrently"
 ```
 ## Create a work function
 ```go
+// Create a type based on your input to the work function
 type loadWorker int
 
 // The work that needs to be performed
+// The input type should implement the WorkFunction interface
 func (w loadWorker) Run() interface{} {
 	time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
 	return w * 2
