@@ -96,4 +96,3 @@ func main() {
 # Credits
 1.  [u/justinisrael](https://www.reddit.com/user/justinisrael/) for inputs on improving resource usage.
 2.  [mh-cbon](https://github.com/mh-cbon) for identifying potential [deadlocks](https://github.com/tejzpr/ordered-concurrently/issues/2).
-
