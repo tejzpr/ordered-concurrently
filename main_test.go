@@ -31,7 +31,7 @@ func Test1(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(loadWorker); !ok {
+				if _, ok := out.(loadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -64,7 +64,7 @@ func Test2(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(loadWorker); !ok {
+				if _, ok := out.(loadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -97,7 +97,7 @@ func Test3(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(zeroLoadWorker); !ok {
+				if _, ok := out.(zeroLoadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -134,7 +134,7 @@ func Test4(t *testing.T) {
 		}()
 		counter := 0
 		for out := range output {
-			if _, ok := out.Value.(zeroLoadWorker); !ok {
+			if _, ok := out.(zeroLoadWorker); !ok {
 				t.Error("Invalid output")
 			} else {
 				counter++
@@ -160,7 +160,7 @@ func TestSortedData(t *testing.T) {
 		}()
 		var res []loadWorker
 		for out := range output {
-			res = append(res, out.Value.(loadWorker))
+			res = append(res, out.(loadWorker))
 		}
 		isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
 			return res[i] < res[j]

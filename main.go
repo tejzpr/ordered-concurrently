@@ -4,16 +4,6 @@ import (
 	"sync"
 )
 
-// OrderedInput input for Processing
-type OrderedInput struct {
-	WorkFn WorkFunction
-}
-
-// OrderedOutput is the output channel type from Process
-type OrderedOutput struct {
-	Value interface{}
-}
-
 // Options options for Process
 type Options struct {
 	PoolSize         int
@@ -32,10 +22,10 @@ type processInput struct {
 }
 
 // Process processes work function based on input.
-// It Accepts an OrderedInput read channel, work function and concurrent go routine pool size.
-// It Returns an OrderedOutput channel.
-func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutput {
-	outputChan := make(chan OrderedOutput, options.OutChannelBuffer)
+// It Accepts an WorkFunction read channel, work function and concurrent go routine pool size.
+// It Returns an interface{} channel.
+func Process(inputChan <-chan WorkFunction, options *Options) <-chan interface{} {
+	outputChan := make(chan interface{}, options.OutChannelBuffer)
 
 	go func() {
 		if options.PoolSize < 1 {
@@ -63,7 +53,7 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 					if item == nil {
 						break
 					}
-					outputChan <- OrderedOutput{Value: item.value}
+					outputChan <- item.value
 					delete(outputMap, current)
 					current++
 					item = outputMap[current]
