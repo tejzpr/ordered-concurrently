@@ -42,7 +42,7 @@ func main() {
 		close(inputChan)
 	}()
 	for out := range output {
-		log.Println(out.Value)
+		log.Println(out)
 	}
 }
 ```
@@ -57,7 +57,7 @@ func main() {
 	outChan := concurrently.Process(inputChan, &concurrently.Options{OutChannelBuffer: 2})
 	go func() {
 		for out := range outChan {
-			log.Println(out.Value)
+			log.Println(out)
 			wg.Done()
 		}
 	}()
