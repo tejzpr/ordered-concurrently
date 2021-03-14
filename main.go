@@ -25,15 +25,16 @@ type WorkFunction interface {
 	Run() interface{}
 }
 
+type processInput struct {
+	workFn WorkFunction
+	order  uint64
+	value  interface{}
+}
+
 // Process processes work function based on input.
 // It Accepts an OrderedInput read channel, work function and concurrent go routine pool size.
 // It Returns an OrderedOutput channel.
 func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutput {
-	type processInput struct {
-		workFn WorkFunction
-		order  uint64
-		value  interface{}
-	}
 	outputChan := make(chan OrderedOutput, options.OutChannelBuffer)
 
 	go func() {
@@ -41,31 +42,31 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 			// Set a minimum number of processors
 			options.PoolSize = 1
 		}
-		processChan := make(chan processInput, options.PoolSize)
-		aggregatorChan := make(chan processInput, options.PoolSize)
+		processChan := make(chan *processInput, options.PoolSize)
+		aggregatorChan := make(chan *processInput, options.PoolSize)
+		doneSemaphoreChan := make(chan bool)
 
 		// Go routine to print data in order
 		go func() {
 			var current uint64
-			var tmp *processInput
 			outputMap := make(map[uint64]*processInput, options.PoolSize)
 			defer func() {
 				close(outputChan)
+				doneSemaphoreChan <- true
 			}()
 			for item := range aggregatorChan {
-				tmp = &item
 				if item.order != current {
-					outputMap[item.order] = tmp
+					outputMap[item.order] = item
 					continue
 				}
 				for {
-					if tmp == nil {
+					if item == nil {
 						break
 					}
-					outputChan <- OrderedOutput{Value: tmp.value}
+					outputChan <- OrderedOutput{Value: item.value}
 					delete(outputMap, current)
 					current++
-					tmp = outputMap[current]
+					item = outputMap[current]
 				}
 			}
 		}()
@@ -97,10 +98,36 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 			}()
 			var order uint64
 			for input := range inputChan {
-				processChan <- processInput{workFn: input, order: order}
+				processChan <- &processInput{workFn: input, order: order}
 				order++
 			}
 		}()
+		<-doneSemaphoreChan
 	}()
 	return outputChan
 }
+
+/*
+type zeroLoadWorker int
+
+func (w zeroLoadWorker) Run() interface{} {
+	return w
+}
+
+func main() {
+	max := 10
+	inputChan := make(chan WorkFunction)
+	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+	go func() {
+		for work := 0; work < max; work++ {
+			// log.Println(work)
+			inputChan <- zeroLoadWorker(work)
+		}
+		close(inputChan)
+	}()
+	for out := range output {
+		log.Println(out.Value)
+		_ = out
+	}
+}
+*/
