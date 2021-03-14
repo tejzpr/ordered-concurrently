@@ -188,7 +188,7 @@ func BenchmarkOC(b *testing.B) {
 }
 
 func BenchmarkOCLoad(b *testing.B) {
-	max := 100000
+	max := 10
 	inputChan := make(chan WorkFunction)
 	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 	go func() {
