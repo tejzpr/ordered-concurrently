@@ -1,5 +1,11 @@
 package orderedconcurrently
 
+type processInput struct {
+	workFn WorkFunction
+	order  uint64
+	value  interface{}
+}
+
 type processInputHeap []*processInput
 
 func (h processInputHeap) Len() int {
@@ -18,11 +24,11 @@ func (h *processInputHeap) Push(x interface{}) {
 	*h = append(*h, x.(*processInput))
 }
 
-func (h processInputHeap) Peek() interface{} {
-	if h.Len() > 0 {
-		return h[0]
+func (s processInputHeap) Peek() (*processInput, bool) {
+	if len(s) > 0 {
+		return s[0], true
 	}
-	return nil
+	return nil, false
 }
 
 func (h *processInputHeap) Pop() interface{} {
