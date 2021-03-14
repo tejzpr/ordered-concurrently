@@ -31,7 +31,7 @@ func Test1(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.(loadWorker); !ok {
+				if _, ok := out.Value.(loadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -64,7 +64,7 @@ func Test2(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.(loadWorker); !ok {
+				if _, ok := out.Value.(loadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -97,7 +97,7 @@ func Test3(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.(zeroLoadWorker); !ok {
+				if _, ok := out.Value.(zeroLoadWorker); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -134,7 +134,7 @@ func Test4(t *testing.T) {
 		}()
 		counter := 0
 		for out := range output {
-			if _, ok := out.(zeroLoadWorker); !ok {
+			if _, ok := out.Value.(zeroLoadWorker); !ok {
 				t.Error("Invalid output")
 			} else {
 				counter++
@@ -160,7 +160,7 @@ func TestSortedData(t *testing.T) {
 		}()
 		var res []loadWorker
 		for out := range output {
-			res = append(res, out.(loadWorker))
+			res = append(res, out.Value.(loadWorker))
 		}
 		isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
 			return res[i] < res[j]
@@ -172,8 +172,35 @@ func TestSortedData(t *testing.T) {
 	})
 }
 
+func TestSortedDataMultiple(t *testing.T) {
+	for i := 0; i < 50; i++ {
+		t.Run("Test if response is sorted", func(t *testing.T) {
+			max := 10
+			inputChan := make(chan WorkFunction)
+			output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+			go func() {
+				for work := 0; work < max; work++ {
+					inputChan <- loadWorker(work)
+				}
+				close(inputChan)
+			}()
+			var res []loadWorker
+			for out := range output {
+				res = append(res, out.Value.(loadWorker))
+			}
+			isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
+				return res[i] < res[j]
+			})
+			if !isSorted {
+				t.Error("output is not sorted")
+			}
+			t.Log("Test if response is sorted")
+		})
+	}
+}
+
 func BenchmarkOC(b *testing.B) {
-	max := 1000000
+	max := 10000
 	inputChan := make(chan WorkFunction)
 	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 	go func() {

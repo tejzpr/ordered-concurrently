@@ -11,6 +11,11 @@ type Options struct {
 	OutChannelBuffer int
 }
 
+// OrderedOutput is the output channel type from Process
+type OrderedOutput struct {
+	Value interface{}
+}
+
 // WorkFunction interface
 type WorkFunction interface {
 	Run() interface{}
@@ -19,9 +24,9 @@ type WorkFunction interface {
 // Process processes work function based on input.
 // It Accepts an WorkFunction read channel, work function and concurrent go routine pool size.
 // It Returns an interface{} channel.
-func Process(inputChan <-chan WorkFunction, options *Options) <-chan interface{} {
+func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutput {
 
-	outputChan := make(chan interface{}, options.OutChannelBuffer)
+	outputChan := make(chan OrderedOutput, options.OutChannelBuffer)
 
 	go func() {
 		if options.PoolSize < 1 {
@@ -44,13 +49,13 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan interface{}
 			for item := range aggregatorChan {
 				heap.Push(outputHeap, item)
 				for top, ok := outputHeap.Peek(); ok && top.order == current; {
-					outputChan <- heap.Pop(outputHeap).(*processInput).value
+					outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(*processInput).value}
 					current++
 				}
 			}
 
 			for outputHeap.Len() > 0 {
-				outputChan <- heap.Pop(outputHeap).(*processInput).value
+				outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(*processInput).value}
 			}
 		}()
 
