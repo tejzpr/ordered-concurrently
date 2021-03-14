@@ -42,12 +42,10 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan interface{}
 			}()
 
 			for item := range aggregatorChan {
-				// log.Println(item.value)
 				heap.Push(outputHeap, item)
 				for top, ok := outputHeap.Peek(); ok && top.order == current; {
 					outputChan <- heap.Pop(outputHeap).(*processInput).value
 					current++
-					continue
 				}
 			}
 
