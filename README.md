@@ -16,12 +16,16 @@ go get github.com/tejzpr/ordered-concurrently
 ```go
 import concurrently "github.com/tejzpr/ordered-concurrently" 
 ```
-## Create a work function
+## Create a work function by implementing WorkFunction interface
 ```go
+// Create a type based on your input to the work function
+type loadWorker int
+
 // The work that needs to be performed
-func workFn(val interface{}) interface{} {
+// The input type should implement the WorkFunction interface
+func (w loadWorker) Run() interface{} {
 	time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-	return val.(int) * 2
+	return w * 2
 }
 ```
 ## Run
@@ -29,16 +33,16 @@ func workFn(val interface{}) interface{} {
 ```go
 func main() {
 	max := 10
-	inputChan := make(chan *concurrently.OrderedInput)
-	output := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10, OutChannelBuffer: 10})
+	inputChan := make(chan concurrently.WorkFunction)
+	output := concurrently.Process(inputChan, &concurrently.Options{PoolSize: 10, OutChannelBuffer: 10})
 	go func() {
 		for work := 0; work < max; work++ {
-			inputChan <- &concurrently.OrderedInput{work}
+			inputChan <- loadWorker(work)
 		}
 		close(inputChan)
 	}()
 	for out := range output {
-		log.Println(out.Value)
+		log.Println(out)
 	}
 }
 ```
@@ -47,13 +51,13 @@ func main() {
 func main() {
 	max := 100
 	// Can be a non blocking channel as well
-	inputChan := make(chan *concurrently.OrderedInput)
+	inputChan := make(chan concurrently.WorkFunction)
 	wg := &sync.WaitGroup{}
 
-	outChan := concurrently.Process(inputChan, workFn, &concurrently.Options{PoolSize: 10})
+	outChan := concurrently.Process(inputChan, &concurrently.Options{OutChannelBuffer: 2})
 	go func() {
 		for out := range outChan {
-			log.Println(out.Value)
+			log.Println(out)
 			wg.Done()
 		}
 	}()
@@ -62,7 +66,7 @@ func main() {
 	// Output will be in the order of input
 	for work := 0; work < max; work++ {
 		wg.Add(1)
-		input := &concurrently.OrderedInput{work}
+		input := loadWorker(work)
 		inputChan <- input
 	}
 	close(inputChan)
