@@ -10,11 +10,11 @@ A library for parallel processing with ordered output in Go. This module process
 # Usage 
 ## Get Module
 ```go
-go get github.com/tejzpr/ordered-concurrently
+go get github.com/tejzpr/ordered-concurrently/v2
 ```
 ## Import Module in your source code
 ```go
-import concurrently "github.com/tejzpr/ordered-concurrently" 
+import concurrently "github.com/tejzpr/ordered-concurrently/v2" 
 ```
 ## Create a work function by implementing WorkFunction interface
 ```go
