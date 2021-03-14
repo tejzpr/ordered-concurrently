@@ -2,6 +2,7 @@ package orderedconcurrently
 
 import (
 	"math/rand"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -146,6 +147,31 @@ func Test4(t *testing.T) {
 	})
 }
 
+func TestSortedData(t *testing.T) {
+	t.Run("Test if response is sorted", func(t *testing.T) {
+		max := 10
+		inputChan := make(chan WorkFunction)
+		output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+		go func() {
+			for work := 0; work < max; work++ {
+				inputChan <- loadWorker(work)
+			}
+			close(inputChan)
+		}()
+		var res []loadWorker
+		for out := range output {
+			res = append(res, out.Value.(loadWorker))
+		}
+		isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
+			return res[i] < res[j]
+		})
+		if !isSorted {
+			t.Error("output is not sorted")
+		}
+		t.Log("Test if response is sorted")
+	})
+}
+
 func BenchmarkOC(b *testing.B) {
 	max := 1000000
 	inputChan := make(chan WorkFunction)
@@ -158,5 +184,37 @@ func BenchmarkOC(b *testing.B) {
 	}()
 	for out := range output {
 		_ = out
+	}
+}
+
+func BenchmarkOCLoad(b *testing.B) {
+	max := 100000
+	inputChan := make(chan WorkFunction)
+	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+	go func() {
+		for work := 0; work < max; work++ {
+			inputChan <- loadWorker(work)
+		}
+		close(inputChan)
+	}()
+	for out := range output {
+		_ = out
+	}
+}
+
+func BenchmarkOC2(b *testing.B) {
+	for i := 0; i < 100; i++ {
+		max := 1000
+		inputChan := make(chan WorkFunction)
+		output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+		go func() {
+			for work := 0; work < max; work++ {
+				inputChan <- zeroLoadWorker(work)
+			}
+			close(inputChan)
+		}()
+		for out := range output {
+			_ = out
+		}
 	}
 }
