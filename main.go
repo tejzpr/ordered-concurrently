@@ -106,28 +106,3 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 	}()
 	return outputChan
 }
-
-/*
-type zeroLoadWorker int
-
-func (w zeroLoadWorker) Run() interface{} {
-	return w
-}
-
-func main() {
-	max := 10
-	inputChan := make(chan WorkFunction)
-	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
-	go func() {
-		for work := 0; work < max; work++ {
-			// log.Println(work)
-			inputChan <- zeroLoadWorker(work)
-		}
-		close(inputChan)
-	}()
-	for out := range output {
-		log.Println(out.Value)
-		_ = out
-	}
-}
-*/
