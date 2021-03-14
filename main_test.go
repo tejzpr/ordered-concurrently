@@ -200,7 +200,7 @@ func TestSortedDataMultiple(t *testing.T) {
 }
 
 func BenchmarkOC(b *testing.B) {
-	max := 10000
+	max := 100000
 	inputChan := make(chan WorkFunction)
 	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 	go func() {
