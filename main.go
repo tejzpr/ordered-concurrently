@@ -2,6 +2,7 @@ package orderedconcurrently
 
 import (
 	"container/heap"
+	"context"
 	"sync"
 )
 
@@ -19,13 +20,13 @@ type OrderedOutput struct {
 
 // WorkFunction interface
 type WorkFunction interface {
-	Run() interface{}
+	Run(ctx context.Context) interface{}
 }
 
 // Process processes work function based on input.
 // It Accepts an WorkFunction read channel, work function and concurrent go routine pool size.
 // It Returns an interface{} channel.
-func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutput {
+func Process(ctx context.Context, inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutput {
 
 	outputChan := make(chan OrderedOutput, options.OutChannelBuffer)
 
@@ -69,7 +70,7 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 					poolWg.Done()
 				}()
 				for input := range processChan {
-					input.value = input.workFn.Run()
+					input.value = input.workFn.Run(ctx)
 					input.workFn = nil
 					aggregatorChan <- input
 				}
