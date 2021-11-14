@@ -8,17 +8,17 @@ import (
 	"time"
 )
 
-type zeroLoadWorker int
-
-func (w zeroLoadWorker) Run() interface{} {
-	return w * 2
+func zeroLoadWorker(w int) func() interface{} {
+	return func() interface{} {
+		return w * 2
+	}
 }
 
-type loadWorker int
-
-func (w loadWorker) Run() interface{} {
-	time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-	return w * 2
+func loadWorker(w int) func() interface{} {
+	return func() interface{} {
+		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+		return w * 2
+	}
 }
 
 func Test1(t *testing.T) {
@@ -31,7 +31,7 @@ func Test1(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(loadWorker); !ok {
+				if _, ok := out.Value.(int); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -64,7 +64,7 @@ func Test2(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(loadWorker); !ok {
+				if _, ok := out.Value.(int); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -97,7 +97,7 @@ func Test3(t *testing.T) {
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
-				if _, ok := out.Value.(zeroLoadWorker); !ok {
+				if _, ok := out.Value.(int); !ok {
 					t.Error("Invalid output")
 				} else {
 					counter++
@@ -134,7 +134,7 @@ func Test4(t *testing.T) {
 		}()
 		counter := 0
 		for out := range output {
-			if _, ok := out.Value.(zeroLoadWorker); !ok {
+			if _, ok := out.Value.(int); !ok {
 				t.Error("Invalid output")
 			} else {
 				counter++
@@ -158,9 +158,9 @@ func TestSortedData(t *testing.T) {
 			}
 			close(inputChan)
 		}()
-		var res []loadWorker
+		var res []int
 		for out := range output {
-			res = append(res, out.Value.(loadWorker))
+			res = append(res, out.Value.(int))
 		}
 		isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
 			return res[i] < res[j]
@@ -184,9 +184,9 @@ func TestSortedDataMultiple(t *testing.T) {
 				}
 				close(inputChan)
 			}()
-			var res []loadWorker
+			var res []int
 			for out := range output {
-				res = append(res, out.Value.(loadWorker))
+				res = append(res, out.Value.(int))
 			}
 			isSorted := sort.SliceIsSorted(res, func(i, j int) bool {
 				return res[i] < res[j]
@@ -222,11 +222,11 @@ func TestStreamingInput(t *testing.T) {
 			}
 		}()
 
-		var res []zeroLoadWorker
+		var res []int
 
 		go func() {
 			for out := range output {
-				res = append(res, out.Value.(zeroLoadWorker))
+				res = append(res, out.Value.(int))
 				wg.Done()
 			}
 		}()

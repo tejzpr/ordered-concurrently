@@ -24,9 +24,9 @@ func (h *processInputHeap) Push(x interface{}) {
 	*h = append(*h, x.(*processInput))
 }
 
-func (s processInputHeap) Peek() (*processInput, bool) {
-	if len(s) > 0 {
-		return s[0], true
+func (h processInputHeap) Peek() (*processInput, bool) {
+	if len(h) > 0 {
+		return h[0], true
 	}
 	return nil, false
 }

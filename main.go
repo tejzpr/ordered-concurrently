@@ -18,9 +18,7 @@ type OrderedOutput struct {
 }
 
 // WorkFunction interface
-type WorkFunction interface {
-	Run() interface{}
-}
+type WorkFunction func() interface{}
 
 // Process processes work function based on input.
 // It Accepts an WorkFunction read channel, work function and concurrent go routine pool size.
@@ -69,7 +67,7 @@ func Process(inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutp
 					poolWg.Done()
 				}()
 				for input := range processChan {
-					input.value = input.workFn.Run()
+					input.value = input.workFn()
 					input.workFn = nil
 					aggregatorChan <- input
 				}
