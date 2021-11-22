@@ -10,11 +10,11 @@ A library for parallel processing with ordered output in Go. This module process
 # Usage 
 ## Get Module
 ```go
-go get github.com/tejzpr/ordered-concurrently/v2
+go get github.com/tejzpr/ordered-concurrently/v3
 ```
 ## Import Module in your source code
 ```go
-import concurrently "github.com/tejzpr/ordered-concurrently/v2" 
+import concurrently "github.com/tejzpr/ordered-concurrently/v3" 
 ```
 ## Create a work function by implementing WorkFunction interface
 ```go
@@ -34,7 +34,8 @@ func (w loadWorker) Run() interface{} {
 func main() {
 	max := 10
 	inputChan := make(chan concurrently.WorkFunction)
-	output := concurrently.Process(inputChan, &concurrently.Options{PoolSize: 10, OutChannelBuffer: 10})
+	ctx := context.Background()
+	output := concurrently.Process(ctx, inputChan, &concurrently.Options{PoolSize: 10, OutChannelBuffer: 10})
 	go func() {
 		for work := 0; work < max; work++ {
 			inputChan <- loadWorker(work)
@@ -50,7 +51,8 @@ func main() {
 ```go
 func main() {
 	inputChan := make(chan concurrently.WorkFunction, 10)
-	output := concurrently.Process(inputChan, &concurrently.Options{PoolSize: 10, OutChannelBuffer: 10})
+	ctx := context.Background()
+	output := concurrently.Process(ctx, inputChan, &concurrently.Options{PoolSize: 10, OutChannelBuffer: 10})
 
 	ticker := time.NewTicker(100 * time.Millisecond)
 	done := make(chan bool)
