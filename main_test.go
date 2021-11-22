@@ -1,6 +1,7 @@
 package orderedconcurrently
 
 import (
+	"context"
 	"math/rand"
 	"sort"
 	"sync"
@@ -10,24 +11,25 @@ import (
 
 type zeroLoadWorker int
 
-func (w zeroLoadWorker) Run() interface{} {
+func (w zeroLoadWorker) Run(ctx context.Context) interface{} {
 	return w * 2
 }
 
 type loadWorker int
 
-func (w loadWorker) Run() interface{} {
+func (w loadWorker) Run(ctx context.Context) interface{} {
 	time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
 	return w * 2
 }
 
 func Test1(t *testing.T) {
 	t.Run("Test with Preset Pool Size", func(t *testing.T) {
+		ctx := context.Background()
 		max := 10
 		inputChan := make(chan WorkFunction)
 		wg := &sync.WaitGroup{}
 
-		outChan := Process(inputChan, &Options{PoolSize: 10})
+		outChan := Process(ctx, inputChan, &Options{PoolSize: 10})
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
@@ -56,11 +58,13 @@ func Test1(t *testing.T) {
 
 func Test2(t *testing.T) {
 	t.Run("Test with default Pool Size", func(t *testing.T) {
+		ctx := context.Background()
+
 		max := 10
 		inputChan := make(chan WorkFunction)
 		wg := &sync.WaitGroup{}
 
-		outChan := Process(inputChan, &Options{OutChannelBuffer: 2})
+		outChan := Process(ctx, inputChan, &Options{OutChannelBuffer: 2})
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
@@ -89,11 +93,13 @@ func Test2(t *testing.T) {
 
 func Test3(t *testing.T) {
 	t.Run("Test Zero Load", func(t *testing.T) {
+		ctx := context.Background()
+
 		max := 10
 		inputChan := make(chan WorkFunction)
 		wg := &sync.WaitGroup{}
 
-		outChan := Process(inputChan, &Options{OutChannelBuffer: 2})
+		outChan := Process(ctx, inputChan, &Options{OutChannelBuffer: 2})
 		counter := 0
 		go func(t *testing.T) {
 			for out := range outChan {
@@ -123,9 +129,11 @@ func Test3(t *testing.T) {
 
 func Test4(t *testing.T) {
 	t.Run("Test without workgroup", func(t *testing.T) {
+		ctx := context.Background()
+
 		max := 10
 		inputChan := make(chan WorkFunction)
-		output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+		output := Process(ctx, inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 		go func() {
 			for work := 0; work < max; work++ {
 				inputChan <- zeroLoadWorker(work)
@@ -149,9 +157,11 @@ func Test4(t *testing.T) {
 
 func TestSortedData(t *testing.T) {
 	t.Run("Test if response is sorted", func(t *testing.T) {
+		ctx := context.Background()
+
 		max := 10
 		inputChan := make(chan WorkFunction)
-		output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+		output := Process(ctx, inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 		go func() {
 			for work := 0; work < max; work++ {
 				inputChan <- loadWorker(work)
@@ -175,9 +185,11 @@ func TestSortedData(t *testing.T) {
 func TestSortedDataMultiple(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		t.Run("Test if response is sorted", func(t *testing.T) {
+			ctx := context.Background()
+
 			max := 10
 			inputChan := make(chan WorkFunction)
-			output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+			output := Process(ctx, inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 			go func() {
 				for work := 0; work < max; work++ {
 					inputChan <- loadWorker(work)
@@ -201,8 +213,9 @@ func TestSortedDataMultiple(t *testing.T) {
 
 func TestStreamingInput(t *testing.T) {
 	t.Run("Test streaming input", func(t *testing.T) {
+		ctx := context.Background()
 		inputChan := make(chan WorkFunction, 10)
-		output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+		output := Process(ctx, inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 
 		ticker := time.NewTicker(100 * time.Millisecond)
 		done := make(chan bool)
@@ -249,7 +262,7 @@ func TestStreamingInput(t *testing.T) {
 func BenchmarkOC(b *testing.B) {
 	max := 100000
 	inputChan := make(chan WorkFunction)
-	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+	output := Process(context.Background(), inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 	go func() {
 		for work := 0; work < max; work++ {
 			inputChan <- zeroLoadWorker(work)
@@ -264,7 +277,7 @@ func BenchmarkOC(b *testing.B) {
 func BenchmarkOCLoad(b *testing.B) {
 	max := 10
 	inputChan := make(chan WorkFunction)
-	output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+	output := Process(context.Background(), inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 	go func() {
 		for work := 0; work < max; work++ {
 			inputChan <- loadWorker(work)
@@ -280,7 +293,7 @@ func BenchmarkOC2(b *testing.B) {
 	for i := 0; i < 100; i++ {
 		max := 1000
 		inputChan := make(chan WorkFunction)
-		output := Process(inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
+		output := Process(context.Background(), inputChan, &Options{PoolSize: 10, OutChannelBuffer: 10})
 		go func() {
 			for work := 0; work < max; work++ {
 				inputChan <- zeroLoadWorker(work)
