@@ -23,7 +23,7 @@ type loadWorker int
 
 // The work that needs to be performed
 // The input type should implement the WorkFunction interface
-func (w loadWorker) Run() interface{} {
+func (w loadWorker) Run(ctx context.Context) interface{} {
 	time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
 	return w * 2
 }
