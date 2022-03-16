@@ -28,6 +28,9 @@ func (w loadWorker) Run(ctx context.Context) interface{} {
 	return w * 2
 }
 ```
+## Demo 
+[Go Playground](https://go.dev/play/p/60b_x0YHzYu)
+
 ## Run
 ### Example - 1
 ```go
