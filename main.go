@@ -27,7 +27,6 @@ type WorkFunction interface {
 // It Accepts an WorkFunction read channel, work function and concurrent go routine pool size.
 // It Returns an interface{} channel.
 func Process(ctx context.Context, inputChan <-chan WorkFunction, options *Options) <-chan OrderedOutput {
-
 	outputChan := make(chan OrderedOutput, options.OutChannelBuffer)
 
 	go func() {
@@ -50,7 +49,10 @@ func Process(ctx context.Context, inputChan <-chan WorkFunction, options *Option
 			}
 			for item := range aggregatorChan {
 				heap.Push(outputHeap, item)
-				for top, ok := outputHeap.Peek(); ok && top.order == current; {
+				for {
+					if top, ok := outputHeap.Peek(); !ok || top.order != current {
+						break
+					}
 					outputChan <- OrderedOutput{Value: heap.Pop(outputHeap).(*processInput).value, Remaining: remaining}
 					current++
 				}
